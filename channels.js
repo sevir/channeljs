@@ -26,29 +26,32 @@ THE SOFTWARE.
  */
 
 (function($) {
-  $.channels = {
-  		openedChannels : [],
-  		publishedMethods : [],
-  		manager : 0,
-
-		openChannel : function(){
-
-		},
-		publishMethods : function (channel, functions){
-
-		},
-		bind: function(channel, event_name){
-
-		},
-		unbind: function(channel, event_name){
-
-		},
-		_findManager: function(){
-			if( top.window.opener && !top.window.opener.closed){
-				$.channels.manager = top.window.opener;
+  $.channels =  function(){
+	 	var openedChannels = [];
+	 	var publishedMethods = [];
+	 	var manager = 0;
+	 	var _findManager = function(){
+	 		if( top.window.opener && !top.window.opener.closed){
+				manager = top.window.opener;
 			}else{
-				$.channels.manager = top;
+				manager = top;
 			}
-		}
-  };
+			return manager;
+	 	}
+
+	 	return{
+			openChannel: function(){
+
+			},
+			publishMethods: function(){
+
+			},
+			bind: function(){
+
+			},
+			unbind: function(){
+
+			}
+	 	}
+	 }
 })(jQuery);
