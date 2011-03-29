@@ -29,7 +29,7 @@ THE SOFTWARE.
   $.channels =  function(){
 	 	var openedChannels = [];
 	 	var publishedMethods = [];
-	 	var manager = 0;
+	 	var manager;
 	 	var _findManager = function(){
 	 		if( top.window.opener && !top.window.opener.closed){
 				manager = top.window.opener;
@@ -40,10 +40,10 @@ THE SOFTWARE.
 	 	}
 
 	 	return{
-			openChannel: function(){
-
+			open: function(name){
+				console.log(_findManager());
 			},
-			publishMethods: function(){
+			publish: function(){
 
 			},
 			bind: function(){
