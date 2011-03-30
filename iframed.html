@@ -7,11 +7,23 @@
 <script src="channels.js" type="text/javascript"></script>
 <script>
 	$(document).ready(function(){
-		$.channels.open("test");
+		$.channels.open("sistema");
+
+		$.channels.bind('sistema','saluda',function(p){
+			$("#tt").append("el mundo diceeee "+p.hola+"<br>");
+		});
+
+		$.channels.bind('sistema','ventana',function(p){
+			console.log('ventana clicked');
+			$("#tt2").append("la ventana diceeee "+p.hola+" <br>");
+			//$.channels.unbind('sistema','ventana');
+		});
 	});
 </script>
 </head>
 
 <body>
+	<div id="tt"></div>
+	<div id="tt2"></div>
 </body>
 </html>
