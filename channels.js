@@ -4,7 +4,7 @@
 
 The MIT License
 
-Copyright (c) 2001 DIGIO S.L.N.E.
+Copyright (c) 2011 DIGIO S.L.N.E.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -25,6 +25,42 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
  */
 
+/*
+ * Use:
+ *
+ * $.channels.open('name_of_channel');
+ *
+ * Opens name_of_channel channel to connecting between different elements.
+ * Although one call of open is valid, by convention, you must open channel
+ * in all window elements that you have before execute another method.
+ *
+ * $.channels.publish('name_of_channel','method' or ['method1', 'method2',...]);
+ *
+ * The element that triggers the channel events/methods publish the methods that others
+ * can listen/bind , the publisher is the provider of the methods. You can publish
+ * one method or an array of methods.
+ *
+ * $.channels.bind('channel', 'method' or ['method1',..], function(window, params){});
+ *
+ * The elements listening one channel event/method has to bind to this methods with the
+ * handle function, this handler receives as a first param the local window, and the second
+ * param, the data passes to each method.
+ *
+ * Channel and method has to be opened and published previously or an error is triggered
+ *
+ * $.channels.unbind('channel','method');
+ *
+ * The element stops listening to the method/event in the channel
+ *
+ * $.channels.trigger('channel', 'method', param_object);
+ *
+ * The provider trigger a method in one channel, passing param_object as params for the
+ * handlers
+ *
+ * NOTE: the functions can be concatenate,
+ * ex: $.channels.open('ch').publish('ch','test').bind('ch','test', function(){ alert('hello'); });
+ */
+
 (function($){
   	$.channels =  function(){
 	 	var openedChannels = new Array();
@@ -32,6 +68,8 @@ THE SOFTWARE.
 	 	var listeners = {};
 	 	var manager;
 	 	var self;
+	 	var useEvents = true;
+
 	 	var _findManager = function(){
 	 		try{
 	 			if( top.window.opener && !top.window.opener.closed){
@@ -107,15 +145,20 @@ THE SOFTWARE.
 	 	}
 
 	 	return {
-			open: function(name){
+			open: function(name, w){
+				if (! w) w = window;
 				_findManager();
-				if(manager != window) return self.open(name);
+				if(manager != window) return self.open(name,w);
 
 				openedChannels = openedChannels.concat(new Array(name)).unique();
-				return this;
+				if(w == window)
+					return this;
+				else
+					return w.$.channels;
 			},
-			publish: function(channel, method){
-				if(manager != window) return self.publish(channel, method);
+			publish: function(channel, method, w){
+				if (! w) w = window;
+				if(manager != window) return self.publish(channel, method, w);
 
 				try{
 					if (openedChannels.indexOf(channel)<0)
@@ -138,7 +181,10 @@ THE SOFTWARE.
 						}
 					}
 
-					return this;
+					if(w == window)
+						return this;
+					else
+						return w.$.channels;
 				}catch(e){
 					le(e.message);
 					return;
@@ -147,9 +193,8 @@ THE SOFTWARE.
 			bind: function(channel, method, func, w){
 				if (! w) w = window;
 
-				w.$.channels._addlistener(channel, method, func);
-
 				if(manager != window) return self.bind(channel, method, func, w);
+				w.$.channels._addlistener(channel, method, func);
 
 				try{
 					if (openedChannels.indexOf(channel)<0)
@@ -164,9 +209,13 @@ THE SOFTWARE.
 							throw err('Channel "'+channel+'" has not a method "'+method+'"');
 
 						publishedMethods[channel][method].push(w);
+						publishedMethods[channel][method] = publishedMethods[channel][method].unique();
 					}
 
-					return this;
+					if(w == window)
+						return this;
+					else
+						return w.$.channels;
 				}catch(e){
 					le(e.message);
 				}
@@ -174,8 +223,13 @@ THE SOFTWARE.
 			unbind: function(channel, method, w){
 				if (! w) w = window;
 
-				if (listeners[channel] & listeners[channel][method])
-					listeners[channel][method] = [];
+				if(w == window){
+					if(!useEvents){
+						if (listeners[channel] & listeners[channel][method])
+							listeners[channel][method] = [];
+					}else
+						w.$(w).unbind(channel+'_ch_'+method);
+				}
 
 				if(manager != window) return self.unbind(channel, method, w);
 				try{
@@ -184,20 +238,30 @@ THE SOFTWARE.
 					if (publishedMethods[channel] && publishedMethods[channel][method])
 						publishedMethods[channel][method].splice(publishedMethods[channel][method].indexOf(w),1);
 
-					return this;
+					if(w == window)
+						return this;
+					else
+						return w.$.channels;
 				}catch(e){
 					le(e.message);
 				}
 			},
-			trigger: function(channel, method, params){
-				if(manager != window) return self.trigger(channel, method, params);
+			trigger: function(channel, method, params, w){
+				if (! w) w = window;
+				if(manager != window) return self.trigger(channel, method, params, w);
 
 				if (publishedMethods[channel] && publishedMethods[channel][method]){
 					for (var i=0; i< publishedMethods[channel][method].length; i++){
-						publishedMethods[channel][method][i].$.channels._execute(channel, method, params);
+						if(useEvents)
+							publishedMethods[channel][method][i].$(publishedMethods[channel][method][i]).trigger(channel+'_ch_'+method, params);
+						else
+							publishedMethods[channel][method][i].$.channels._execute(channel, method, params);
 					}
 				}
-				return this;
+				if(w == window)
+					return this;
+				else
+					return w.$.channels;
 			},
 			_addlistener: function(channel, method, func){
 				if (typeof (method) != "string"){
@@ -205,15 +269,20 @@ THE SOFTWARE.
 						return this._addlistener(channel, method[i], func);
 					}
 				}else{
-					if (listeners[channel]){
-						if (! listeners[channel][method]){
+					if (useEvents){
+						$(window).bind(channel+'_ch_'+method, func);
+					}else{
+						if (listeners[channel]){
+							if (! listeners[channel][method]){
+								listeners[channel][method] = new Array();
+							}
+						}else{
+							listeners[channel] = {};
 							listeners[channel][method] = new Array();
 						}
-					}else{
-						listeners[channel] = {};
-						listeners[channel][method] = new Array();
+						listeners[channel][method].push(func);
+						listeners[channel][method] = listeners[channel][method].unique();
 					}
-					listeners[channel][method].push(func);
 				}
 				return this;
 			},
@@ -221,7 +290,7 @@ THE SOFTWARE.
 				try{
 					if (listeners[channel] && listeners[channel][method])
 					for (var i=0; i<listeners[channel][method].length; i++){
-						if (! listeners[channel][method][i](params) ) break;
+						if (! listeners[channel][method][i](window, params) ) break;
 					}
 
 					return this;

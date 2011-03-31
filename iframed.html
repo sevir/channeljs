@@ -7,13 +7,11 @@
 <script src="channels.js" type="text/javascript"></script>
 <script>
 	$(document).ready(function(){
-		$.channels.open("sistema");
-
-		$.channels.bind('sistema','saluda',function(p){
+		console.log(window);
+		$.channels.open("sistema").bind('sistema','saluda',function(e,p){
 			$("#tt").append("el mundo diceeee "+p.hola+"<br>");
-		});
-
-		$.channels.bind('sistema','ventana',function(p){
+			$.channels.unbind('sistema','saluda');
+		}).bind('sistema','ventana',function(e,p){
 			console.log('ventana clicked');
 			$("#tt2").append("la ventana diceeee "+p.hola+" <br>");
 			//$.channels.unbind('sistema','ventana');

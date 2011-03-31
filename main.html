@@ -15,7 +15,7 @@
 			$.channels.trigger('sistema','saluda', {hola:'mundo'});
 		});
 
-		$.channels.bind('sistema','saluda',function(p){
+		$.channels.bind('sistema','saluda',function(e,p){
 			$("#tt").append("el mundo diceeee "+p.hola+"<br>");
 		});
 
