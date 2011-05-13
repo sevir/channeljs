@@ -7,14 +7,32 @@
 <script src="channels.js" type="text/javascript"></script>
 <script>
 	$(document).ready(function(){
+		//Sin Flash no cross domain si cross DOM
+		/*
 		$.channels.open("sistema");
 
+		$.channels.config({useFlashConnector:true, flashConnectorUrl: "/swf/comm.swf"});
 		$.channels.bind('sistema','saluda',function(e,p){
 			$("#tt").append("el mundo diceeee "+p.hola+"<br>");
 		});
 
 		$("#bt").click(function(){
 			$.channels.trigger('sistema','ventana', {hola: 'weeeeeee desde la ventanaaa'});
+		});
+		*/
+		$.channels.channels_ready(function(){
+			$.channels.open("sistema");
+
+			$.channels.bind('sistema','saluda',function(e,p){
+				$("#tt").append("el mundo diceeee "+p.hola+"<br>");
+			});
+
+			$("#bt").click(function(){
+				$.channels.trigger('sistema','ventana', {hola: 'weeeeeee desde la ventanaaa'});
+			});
+		}).config({
+			useFlashConnector: true,
+			flashConnectorUrl: "/swf/comm.swf"
 		});
 	});
 </script>

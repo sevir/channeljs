@@ -8,6 +8,8 @@
 <script>
 	var p= 0;
 	$(document).ready(function(){
+		//Sin Flash no cross domain si cross DOM
+		/*
 		$.channels.open("sistema").publish("sistema",['saluda','ventana','iframe']);
 
 		$("#clickme").click(function(){
@@ -22,6 +24,28 @@
 		$("#popup").click(function(){
 			window.open("windowed.html", "external"+(p++), "width: 200, height: 200");
 		});
+		*/
+
+		//Con Flash y cross domain
+		$.channels.channels_ready(function(){
+			$.channels.open("sistema").publish("sistema",['saluda','ventana','iframe']);
+
+			$("#clickme").click(function(){
+				$.channels.trigger('sistema','saluda', {hola:'mundo'});
+			});
+
+			$.channels.bind('sistema','saluda',function(e,p){
+				$("#tt").append("el mundo diceeee "+p.hola+"<br>");
+			});
+
+			$("#popup").click(function(){
+				window.open("windowed.html", "external"+(p++), "width: 200, height: 200");
+			});
+
+		}).config({
+			useFlashConnector: true,
+			flashConnectorUrl: "/swf/comm.swf"
+		});
 
 	});
 </script>
@@ -30,7 +54,7 @@
 <body>
 	Test of channeljs
 	<button id="clickme">Click me</button><button id="popup">Abre ventanuco</button>
-	<iframe src="iframed.html?tt=.php" style="border: #ccc 1px solid; width: 100%; height: 400%;"></iframe>
+	<iframe src="iframed.html" style="border: #ccc 1px solid; width: 100%; height: 300px;"></iframe>
 	<div id="tt"></div>
 </body>
 </html>
